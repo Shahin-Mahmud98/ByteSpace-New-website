@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BarChart3, Star } from "lucide-react";
 
-export type Course = { title: string; image: string; author: string; slug: string; rating: number; level: string; price: number };
+export type Course = { title: string; image: string; author: string; slug: string; category?: string; rating: number; level: string; price: number };
 
 const Chip = ({ children }: { children: React.ReactNode }) => (
   <span className="rounded-full bg-white/60 px-3 py-1 text-xs text-neutral-600 backdrop-blur">{children}</span>

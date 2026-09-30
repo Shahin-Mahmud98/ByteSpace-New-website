@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Facebook } from "lucide-react";
-import { setUser } from "@/lib/session";
+import { emailLogin, emailSignUp, friendlyAuthError, signInWithProvider, type Provider } from "@/lib/socialAuth";
 import Button from "./ui/Button";
 
 type Mode = "login" | "signup";
@@ -25,6 +25,20 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [success, setSuccess] = useState("");
   const router = useRouter();
 
+  async function social(provider: Provider) {
+    setErrors({});
+    setLoading(true);
+    try {
+      await signInWithProvider(provider);
+      router.push("/");
+    } catch (e) {
+      const msg = friendlyAuthError(e);
+      if (msg) setErrors({ form: msg });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setValues({ ...values, [k]: e.target.value });
 
@@ -36,20 +50,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setLoading(true);
     setSuccess("");
     try {
-      const res = await fetch(`/api/auth/${mode}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      const data = await res.json();
-      if (!res.ok) setErrors({ form: data.message ?? "Something went wrong." });
-      else {
-        setSuccess(data.message);
-        setUser({ name: data.user.name, email: data.user.email });
-        router.push("/");
-      }
-    } catch {
-      setErrors({ form: "Network error. Please try again." });
+      if (isSignup) await emailSignUp(values.name, values.email, values.password);
+      else await emailLogin(values.email, values.password);
+      setSuccess(isSignup ? "Account created! Redirecting…" : "Logged in! Redirecting…");
+      router.push("/");
+    } catch (e) {
+      setErrors({ form: friendlyAuthError(e) ?? undefined });
     } finally {
       setLoading(false);
     }
@@ -76,17 +82,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         {success && <p role="status" className="text-sm text-green-700">{success}</p>}
         <div className="flex justify-end"><Button type="submit" disabled={loading}>{loading ? "Please wait…" : isSignup ? "Continue" : "Sign In"}</Button></div>
       </form>
-      {!isSignup && (
-        <div className="mt-10">
-          <div className="flex items-center gap-4 text-neutral-500"><hr className="flex-1" />or<hr className="flex-1" /></div>
-          <div className="mt-6 flex justify-center gap-4">
-            <button type="button" aria-label="Continue with Facebook" onClick={() => setErrors({ form: "Facebook login is not configured in this demo." })}
-              className="grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 hover:bg-neutral-50"><Facebook className="fill-ink" /></button>
-            <button type="button" aria-label="Continue with Google" onClick={() => setErrors({ form: "Google login is not configured in this demo." })}
-              className="grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 font-heading text-2xl font-bold hover:bg-neutral-50">G</button>
-          </div>
+      <div className="mt-10">
+        <div className="flex items-center gap-4 text-neutral-500"><hr className="flex-1" />or<hr className="flex-1" /></div>
+        <div className="mt-6 flex justify-center gap-4">
+          <button type="button" disabled={loading} aria-label="Continue with Facebook" onClick={() => social("facebook")}
+            className="grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 hover:bg-neutral-50 disabled:opacity-60"><Facebook className="fill-ink" /></button>
+          <button type="button" disabled={loading} aria-label="Continue with Google" onClick={() => social("google")}
+            className="grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 font-heading text-2xl font-bold hover:bg-neutral-50 disabled:opacity-60">G</button>
         </div>
-      )}
+      </div>
       <p className="mt-10 text-center text-neutral-600">
         {isSignup ? "Already have an account? " : "New user? "}
         <Link href={isSignup ? "/login" : "/signup"} className="text-brand">{isSignup ? "Login" : "Create an account"}</Link>

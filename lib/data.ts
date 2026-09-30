@@ -19,7 +19,7 @@ export const courses = [
   { title: "Balancing Productivity and Life", image: "/img/course-4.jpg" },
   { title: "Mastering Money Management", image: "/img/course-5.jpg" },
   { title: "From Idea to Startup Success", image: "/img/course-6.jpg" },
-].map((c) => ({ ...c, slug: c.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), author: "purepearl studio", rating: 4.5, level: "Beginner", price: 25 }));
+].map((c, i) => ({ ...c, level: ["Beginner", "Intermediate", "Advanced"][i % 3], category: ["UI/UX Design", "Graphic Design", "Data Science", "Productivity", "Marketing", "Freelance & Entrepreneurship"][i], slug: c.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), author: "purepearl studio", rating: 4.5, price: 25 }));
 
 export const learningPaths = [
   { label: "Design", icon: Palette },

@@ -1,7 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { clearUser, getUser, type SessionUser } from "@/lib/session";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { firebaseSignOut } from "@/lib/socialAuth";
+
+type SessionUser = { name: string };
 import { Menu, ShoppingBag, X } from "lucide-react";
 import Logo from "./Logo";
 import { navLinks } from "@/lib/data";
@@ -9,8 +13,8 @@ import { navLinks } from "@/lib/data";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
-  useEffect(() => setUser(getUser()), []);
-  const logout = () => { clearUser(); setUser(null); };
+  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u ? { name: u.displayName ?? u.email?.split("@")[0] ?? "Learner" } : null)), []);
+  const logout = () => firebaseSignOut();
   return (
     <header className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-white">
       <Logo />
